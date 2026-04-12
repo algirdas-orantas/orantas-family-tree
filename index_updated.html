@@ -153,6 +153,14 @@ header p{color:#7a95a8;font-size:.82rem;margin-top:5px;letter-spacing:1px}
 <header>
   <h1>⚜ Orantas Family Heritage</h1>
   <p>Search or Click any person to explore</p>
+  <div class="search-wrap" style="padding-top:6px;padding-bottom:4px">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="search-input" placeholder="Search names, places, notes..." oninput="onSearch(this.value)" onkeydown="if(event.key==='Escape'){this.value='';onSearch('');}"/>
+      <span class="search-count" id="search-count"></span>
+      <button class="search-clear" id="search-clear" onclick="document.getElementById('search-input').value='';onSearch('');">✕</button>
+    </div>
+  </div>
 </header>
 
 <div class="tabs">
@@ -165,14 +173,6 @@ header p{color:#7a95a8;font-size:.82rem;margin-top:5px;letter-spacing:1px}
   <div class="tab" onclick="setTab('worldmap',this)">🗺️ World Map</div>
 </div>
 
-<div class="search-wrap">
-  <div class="search-box">
-    <span class="search-icon">🔍</span>
-    <input type="text" id="search-input" placeholder="Search names, places, notes..." oninput="onSearch(this.value)" onkeydown="if(event.key==='Escape'){this.value='';onSearch('');}"/>
-    <span class="search-count" id="search-count"></span>
-    <button class="search-clear" id="search-clear" onclick="document.getElementById('search-input').value='';onSearch('');">✕</button>
-  </div>
-</div>
 <div id="search-results" class="search-results" style="display:none"></div>
 
 <div class="legend">

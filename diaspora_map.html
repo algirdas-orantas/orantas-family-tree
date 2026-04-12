@@ -3,13 +3,495 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orantas Diaspora Map - Family Tree</title>
+<title>Orantas Diaspora — Lithuania → Brazil</title>
 <style>
-  
-  
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0d1117;color:#e0e0e0;overflow-x:hidden}
+.header{text-align:center;padding:20px 20px 10px;background:linear-gradient(180deg,#1a1a2e 0%,#0d1117 100%)}
+.header h1{color:#f0c040;font-size:1.5em;margin-bottom:4px}
+.header .sub{color:#888;font-size:0.82em}
+.map-container{position:relative;width:100%;max-width:1200px;margin:0 auto;padding:10px}
+
+/* ===== WORLD VIEW ===== */
+.world-panel{position:relative;height:420px;background:radial-gradient(ellipse at 40% 45%,#111827 0%,#0d1117 70%);border:1px solid #222;border-radius:12px;margin-bottom:20px;overflow:hidden}
+.world-panel svg{width:100%;height:100%}
+
+/* ===== DETAIL PANELS ===== */
+.detail-row{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
+.detail-panel{flex:1;min-width:340px;max-width:580px;background:#111827;border:1px solid #222;border-radius:12px;padding:16px;position:relative}
+.detail-panel h2{color:#f0c040;font-size:1.1em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.detail-panel h2 .flag{font-size:1.3em}
+
+/* Location pins */
+.loc{position:absolute;cursor:pointer;transition:all .2s}
+.loc:hover .loc-label{opacity:1;transform:translateX(-50%) translateY(-4px)}
+.loc-dot{width:10px;height:10px;border-radius:50%;border:1.5px solid #fff;position:relative;z-index:2}
+.loc-dot.major{width:14px;height:14px;box-shadow:0 0 8px rgba(255,255,255,0.3)}
+.loc-dot.emigrant{background:#4ade80;border-color:#4ade80}
+.loc-dot.stayed{background:#f59e0b;border-color:#f59e0b}
+.loc-dot.root{background:#818cf8;border-color:#818cf8}
+.loc-dot.transit{background:#f87171;border-color:#f87171}
+.loc-dot.arrival{background:#38bdf8;border-color:#38bdf8}
+.loc-dot.city{background:#e879f9;border-color:#e879f9}
+.loc-label{position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);white-space:nowrap;font-size:0.7em;color:#ccc;opacity:0.7;transition:all .2s;pointer-events:none;text-shadow:0 1px 4px #000,0 0 8px #000;z-index:5}
+.loc-label strong{color:#fff}
+
+/* Route lines */
+.route{stroke-width:1.5;fill:none;opacity:0.5}
+.route.sea{stroke:#38bdf8;stroke-dasharray:6 3}
+.route.emigration{stroke:#4ade80;stroke-dasharray:8 4}
+.route.origin{stroke:#818cf8;stroke-dasharray:4 2;opacity:0.3}
+
+/* Legend */
+.legend{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:8px 16px;font-size:0.75em}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-dot{width:10px;height:10px;border-radius:50%;border:1.5px solid}
+
+/* Info cards in detail panels */
+.info-card{background:#1a2332;border:1px solid #2a3a4a;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:0.82em;line-height:1.4}
+.info-card .ic-title{font-weight:700;color:#ddd;margin-bottom:3px}
+.info-card .ic-detail{color:#999;font-size:0.9em}
+.info-card .ic-source{color:#666;font-size:0.8em;font-style:italic;margin-top:4px}
+.highlight{color:#f0c040}
+.green{color:#4ade80}
+.blue{color:#38bdf8}
+.purple{color:#818cf8}
+.red{color:#f87171}
+.pink{color:#e879f9}
+
+/* Timeline */
+.timeline{position:relative;padding-left:20px;margin-top:10px}
+.timeline::before{content:'';position:absolute;left:6px;top:0;bottom:0;width:2px;background:#333}
+.tl-event{position:relative;padding:6px 0 12px 16px;font-size:0.8em}
+.tl-event::before{content:'';position:absolute;left:-17px;top:10px;width:10px;height:10px;border-radius:50%;border:2px solid #555;background:#1a2332}
+.tl-event.em::before{border-color:#4ade80;background:#1a3a1a}
+.tl-event.death::before{border-color:#f87171;background:#3a1a1a}
+.tl-event.marriage::before{border-color:#e879f9;background:#2a1a2a}
+.tl-event .tl-year{color:#f0c040;font-weight:700;margin-right:6px}
+.tl-event .tl-text{color:#bbb}
+
+/* Stats bar */
+.stats-bar{display:flex;justify-content:center;gap:30px;padding:16px;flex-wrap:wrap}
+.stat{text-align:center}
+.stat .stat-num{font-size:1.8em;font-weight:700;color:#f0c040}
+.stat .stat-label{font-size:0.75em;color:#888}
+
+.footer{text-align:center;color:#555;font-size:0.72em;padding:16px}
+
+.nav-bar{display:flex;justify-content:center;gap:12px;padding:10px;background:#111;border-bottom:1px solid #222;position:sticky;top:0;z-index:100}
+.nav-bar a{color:#f0c040;text-decoration:none;font-size:0.85em;padding:6px 14px;border:1px solid #333;border-radius:6px;transition:all .2s}
+.nav-bar a:hover{background:#222;border-color:#f0c040}
+.nav-bar a.active{background:#2a2a1a;border-color:#f0c040;color:#fff}
 </style>
 </head>
 <body>
-  
+
+<div class="nav-bar">
+  <a href="brazilian_tree.html">🌳 Family Tree</a>
+  <a href="diaspora_map.html" class="active">🌍 Diaspora Map</a>
+</div>
+
+<div class="header">
+  <h1>🌍 Orantas Diaspora — Lithuania → Brazil</h1>
+  <p class="sub">Geographic mapping of the Orantas/Orintas emigration from Suvalkija to São Paulo · Heritage Database · 997 entries</p>
+</div>
+
+<!-- ===== LEGEND ===== -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#818cf8;border-color:#818cf8"></div> Ancestral roots</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;border-color:#f59e0b"></div> Stayed in Lithuania</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#4ade80;border-color:#4ade80"></div> Emigrated to Brazil</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f87171;border-color:#f87171"></div> Transit (Bremen)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#38bdf8;border-color:#38bdf8"></div> Arrival port (Santos)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#e879f9;border-color:#e879f9"></div> Settlement (São Paulo)</div>
+</div>
+
+<!-- ===== WORLD SVG MAP ===== -->
+<div class="map-container">
+<div class="world-panel">
+<svg viewBox="0 0 1200 420" xmlns="http://www.w3.org/2000/svg">
+  <!-- Ocean background -->
+  <defs>
+    <linearGradient id="ocean" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#4ade80" opacity="0.6"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="420" fill="url(#ocean)"/>
+
+  <!-- Simplified continental outlines -->
+  <!-- Europe (simplified) -->
+  <path d="M 540,60 L 580,55 620,50 660,60 700,55 730,70 740,90 750,80 760,90 770,85 780,100 770,120 760,130 740,140 720,135 700,140 680,150 660,155 640,160 620,155 600,160 580,155 560,150 540,155 530,140 520,130 530,120 540,110 535,100 530,90 535,75 Z" fill="#1a2a3a" stroke="#2a3a4a" stroke-width="0.5" opacity="0.6"/>
+  <!-- Iberian peninsula -->
+  <path d="M 520,130 L 510,140 500,155 505,170 515,175 530,175 545,170 555,160 560,150 540,155 530,140 Z" fill="#1a2a3a" stroke="#2a3a4a" stroke-width="0.5" opacity="0.6"/>
+  <!-- Italy -->
+  <path d="M 620,155 L 625,170 630,185 625,200 620,195 615,180 610,170 620,155 Z" fill="#1a2a3a" stroke="#2a3a4a" stroke-width="0.5" opacity="0.5"/>
+  <!-- British Isles -->
+  <path d="M 505,80 L 515,75 520,85 515,100 505,95 Z" fill="#1a2a3a" stroke="#2a3a4a" stroke-width="0.5" opacity="0.5"/>
+  <!-- Scandinavia -->
+  <path d="M 600,20 L 610,15 625,25 630,40 625,55 615,50 605,40 600,30 Z" fill="#1a2a3a" stroke="#2a3a4a" stroke-width="0.5" opacity="0.5"/>
+
+  <!-- Africa (west coast hint) -->
+  <path d="M 500,190 L 520,185 540,190 560,200 570,220 575,250 570,280 560,310 540,330 520,340 500,335 490,310 485,280 490,250 495,220 Z" fill="#1a2a3a" stroke="#2a3a4a" stroke-width="0.5" opacity="0.4"/>
+
+  <!-- South America -->
+  <path d="M 250,220 L 280,210 310,215 340,225 360,240 370,260 375,280 380,310 375,340 360,360 340,375 310,385 280,380 260,365 245,340 235,310 230,280 235,250 Z" fill="#1a2a3a" stroke="#2a3a4a" stroke-width="0.5" opacity="0.6"/>
+
+  <!-- North America hint -->
+  <path d="M 100,50 L 200,40 280,50 320,70 340,100 350,140 340,170 310,190 280,200 250,210 220,200 180,180 140,160 110,130 90,100 Z" fill="#1a2a3a" stroke="#2a3a4a" stroke-width="0.5" opacity="0.3"/>
+
+  <!-- ===== ROUTE LINES ===== -->
+  <!-- Lithuania to Bremen (overland) -->
+  <path d="M 688,82 C 660,80 640,78 595,72" class="route origin" stroke="#818cf8"/>
+
+  <!-- Bremen to Santos (sea route via Atlantic) -->
+  <path d="M 595,72 C 540,100 480,160 420,220 C 380,260 340,280 315,300" class="route sea" stroke="#38bdf8" marker-end="url(#arrow)"/>
+
+  <!-- Santos to São Paulo (short overland) -->
+  <path d="M 315,300 L 305,290" class="route emigration" stroke="#4ade80"/>
+
+  <!-- Emigration arrow label -->
+  <text x="430" y="175" fill="#4ade80" font-size="10" opacity="0.7" transform="rotate(-30 430 175)">SS Sierra Cordoba · Jan 1930</text>
+  <text x="445" y="188" fill="#38bdf8" font-size="8" opacity="0.5" transform="rotate(-30 445 188)">Bremen → Santos · ~18 Lithuanian emigrants</text>
+
+  <!-- ===== LOCATION DOTS ===== -->
+
+  <!-- LITHUANIA cluster -->
+  <g filter="url(#glow)">
+    <!-- Kybartai region highlight -->
+    <circle cx="688" cy="82" r="25" fill="none" stroke="#f0c040" stroke-width="0.5" stroke-dasharray="3 2" opacity="0.3"/>
+    <text x="688" y="62" fill="#f0c040" font-size="8" text-anchor="middle" opacity="0.5">SUVALKIJA</text>
+
+    <!-- Kybartai -->
+    <circle cx="688" cy="82" r="6" fill="#f59e0b" stroke="#fff" stroke-width="1"/>
+    <text x="688" y="98" fill="#f59e0b" font-size="9" text-anchor="middle" font-weight="700">Kybartai</text>
+    <text x="688" y="108" fill="#999" font-size="7" text-anchor="middle">Jonas #1 · Antanas · Anelė</text>
+
+    <!-- Bijotai -->
+    <circle cx="678" cy="78" r="5" fill="#4ade80" stroke="#fff" stroke-width="1"/>
+    <text x="660" y="74" fill="#4ade80" font-size="8" text-anchor="end" font-weight="600">Bijotai</text>
+    <text x="660" y="82" fill="#999" font-size="6.5" text-anchor="end">Jonas #2 · Vincas departed</text>
+
+    <!-- Naumiestis -->
+    <circle cx="680" cy="90" r="4" fill="#4ade80" stroke="#fff" stroke-width="1"/>
+    <text x="668" y="96" fill="#4ade80" font-size="7" text-anchor="end">Naumiestis</text>
+
+    <!-- Virbalis -->
+    <circle cx="694" cy="85" r="3.5" fill="#f59e0b" stroke="#fff" stroke-width="0.8"/>
+    <text x="708" y="87" fill="#f59e0b" font-size="7">Virbalis</text>
+
+    <!-- Kaišiadorys (Sofia) - further north in Lithuania -->
+    <circle cx="700" cy="62" r="3.5" fill="#4ade80" stroke="#fff" stroke-width="0.8"/>
+    <text x="714" y="64" fill="#888" font-size="7">Kaišiadorys</text>
+    <text x="714" y="72" fill="#666" font-size="6">(Sofia Paliukaitė)</text>
+
+    <!-- Rasiai (Domicėlė) -->
+    <circle cx="682" cy="86" r="3" fill="#4ade80" stroke="#fff" stroke-width="0.8"/>
+
+    <!-- Gelgaudiškis (deep roots) -->
+    <circle cx="672" cy="72" r="4" fill="#818cf8" stroke="#fff" stroke-width="0.8"/>
+    <text x="656" y="68" fill="#818cf8" font-size="7" text-anchor="end">Gelgaudiškis</text>
+    <text x="656" y="75" fill="#666" font-size="6" text-anchor="end">Orintas since 1780s</text>
+  </g>
+
+  <!-- BREMEN -->
+  <g filter="url(#glow)">
+    <circle cx="595" cy="72" r="5" fill="#f87171" stroke="#fff" stroke-width="1"/>
+    <text x="595" y="64" fill="#f87171" font-size="9" text-anchor="middle" font-weight="600">Bremen</text>
+    <text x="595" y="54" fill="#888" font-size="7" text-anchor="middle">Departure · 6 Jan 1930</text>
+  </g>
+
+  <!-- SANTOS -->
+  <g filter="url(#glow)">
+    <circle cx="315" cy="300" r="5" fill="#38bdf8" stroke="#fff" stroke-width="1"/>
+    <text x="330" y="304" fill="#38bdf8" font-size="9" font-weight="600">Santos</text>
+    <text x="330" y="313" fill="#888" font-size="7">Arrival port</text>
+  </g>
+
+  <!-- SÃO PAULO cluster -->
+  <g filter="url(#glow)">
+    <circle cx="305" cy="288" r="20" fill="none" stroke="#e879f9" stroke-width="0.5" stroke-dasharray="3 2" opacity="0.4"/>
+
+    <circle cx="305" cy="288" r="7" fill="#e879f9" stroke="#fff" stroke-width="1"/>
+    <text x="282" y="284" fill="#e879f9" font-size="10" text-anchor="end" font-weight="700">São Paulo</text>
+    <text x="282" y="294" fill="#999" font-size="7" text-anchor="end">Vila Zelina · Bom Retiro</text>
+    <text x="282" y="303" fill="#999" font-size="7" text-anchor="end">Guaianazes · Mooca · Vila Mariana</text>
+
+    <!-- Vargem Grande Paulista -->
+    <circle cx="293" cy="283" r="3" fill="#e879f9" stroke="#fff" stroke-width="0.5" opacity="0.6"/>
+    <text x="280" y="276" fill="#888" font-size="6" text-anchor="end">Vargem Gde Paulista</text>
+  </g>
+
+  <!-- ===== DISTANCE ANNOTATIONS ===== -->
+  <text x="640" y="130" fill="#555" font-size="7" text-anchor="middle">~10,500 km</text>
+  <line x1="610" y1="128" x2="670" y2="128" stroke="#444" stroke-width="0.5"/>
+
+  <!-- ===== INSET: Lithuania detail ===== -->
+  <rect x="830" y="10" width="360" height="250" rx="8" fill="#111827" stroke="#2a3a4a" stroke-width="1"/>
+  <text x="1010" y="30" fill="#f0c040" font-size="11" text-anchor="middle" font-weight="700">Kybartai Area — ~15 km radius</text>
+
+  <!-- Simplified Kybartai area roads/geography -->
+  <!-- River Šešupė approximation -->
+  <path d="M 850,120 C 880,115 920,125 960,118 C 1000,112 1040,120 1080,115 C 1120,110 1160,118 1180,115" fill="none" stroke="#1a3a5a" stroke-width="1.5" opacity="0.5"/>
+  <text x="855" y="115" fill="#1a4a6a" font-size="6" opacity="0.6">Šešupė</text>
+
+  <!-- Distance scale -->
+  <line x1="860" y1="240" x2="920" y2="240" stroke="#666" stroke-width="1"/>
+  <text x="890" y="250" fill="#666" font-size="7" text-anchor="middle">~5 km</text>
+
+  <!-- Locations in detail -->
+  <!-- Kybartai -->
+  <circle cx="1020" cy="130" r="8" fill="none" stroke="#f59e0b" stroke-width="1.5"/>
+  <circle cx="1020" cy="130" r="3" fill="#f59e0b"/>
+  <text x="1020" y="118" fill="#f59e0b" font-size="9" text-anchor="middle" font-weight="700">KYBARTAI</text>
+  <text x="1020" y="146" fill="#ccc" font-size="7" text-anchor="middle">Jonas #1 + Marijona</text>
+  <text x="1020" y="155" fill="#999" font-size="6.5" text-anchor="middle">Antanas b.1901 · Anelė b.1904</text>
+  <text x="1020" y="163" fill="#888" font-size="6" text-anchor="middle">Jonas d.1926 · buried Virbalis</text>
+
+  <!-- Bijotai -->
+  <circle cx="960" cy="100" r="7" fill="none" stroke="#4ade80" stroke-width="1.5"/>
+  <circle cx="960" cy="100" r="3" fill="#4ade80"/>
+  <text x="960" y="88" fill="#4ade80" font-size="9" text-anchor="middle" font-weight="700">BIJOTAI</text>
+  <text x="960" y="78" fill="#ccc" font-size="7" text-anchor="middle">Jonas #2 + Marcelė (alive 1939)</text>
+  <text x="918" y="110" fill="#999" font-size="6.5" text-anchor="end">Vicente b.1908 → Brazil</text>
+  <text x="918" y="118" fill="#999" font-size="6.5" text-anchor="end">Justinas b.1912 · Jonas Jr. b.1915</text>
+
+  <!-- Distance line Bijotai-Kybartai -->
+  <line x1="968" y1="104" x2="1012" y2="126" stroke="#555" stroke-width="0.5" stroke-dasharray="2 2"/>
+  <text x="990" y="112" fill="#777" font-size="6.5" transform="rotate(25 990 112)">6.7 km</text>
+
+  <!-- Naumiestis -->
+  <circle cx="920" cy="170" r="6" fill="none" stroke="#4ade80" stroke-width="1"/>
+  <circle cx="920" cy="170" r="2.5" fill="#4ade80"/>
+  <text x="920" y="184" fill="#4ade80" font-size="8" text-anchor="middle">K. Naumiestis</text>
+  <text x="920" y="193" fill="#999" font-size="6.5" text-anchor="middle">Vicente´s birth parish</text>
+
+  <!-- Distance Bijotai-Naumiestis -->
+  <line x1="955" y1="107" x2="925" y2="164" stroke="#555" stroke-width="0.5" stroke-dasharray="2 2"/>
+  <text x="932" y="138" fill="#777" font-size="6.5" transform="rotate(70 932 138)">12.1 km</text>
+
+  <!-- Virbalis -->
+  <circle cx="1060" cy="108" r="5" fill="none" stroke="#f59e0b" stroke-width="1"/>
+  <circle cx="1060" cy="108" r="2" fill="#f59e0b"/>
+  <text x="1075" y="104" fill="#f59e0b" font-size="8">Virbalis</text>
+  <text x="1075" y="113" fill="#999" font-size="6.5">Cemetery (ORANTŲ stone)</text>
+  <text x="1075" y="121" fill="#888" font-size="6">Justinas 1912–1970</text>
+
+  <!-- Distance Bijotai-Virbalis -->
+  <line x1="966" y1="102" x2="1055" y2="108" stroke="#555" stroke-width="0.5" stroke-dasharray="2 2"/>
+  <text x="1008" y="100" fill="#777" font-size="6.5">4.2 km</text>
+
+  <!-- Bajorų dv -->
+  <circle cx="1040" cy="148" r="3" fill="#4ade80" opacity="0.6"/>
+  <text x="1055" y="151" fill="#888" font-size="6.5">Bajorų dv.</text>
+  <text x="1055" y="159" fill="#666" font-size="6">Antanas born</text>
+
+  <!-- Karolinavas -->
+  <circle cx="1050" cy="170" r="3" fill="#f59e0b" opacity="0.6"/>
+  <text x="1065" y="173" fill="#888" font-size="6.5">Karolinavas</text>
+  <text x="1065" y="181" fill="#666" font-size="6">Jonas Jr. born</text>
+
+  <!-- Šūkliai / Šikšnių dv -->
+  <circle cx="975" cy="145" r="3" fill="#f59e0b" opacity="0.6"/>
+  <text x="962" y="152" fill="#888" font-size="6.5" text-anchor="end">Šūkliai</text>
+  <text x="962" y="160" fill="#666" font-size="6" text-anchor="end">Justinas lived</text>
+
+  <!-- Rasiai (Domicėlė) -->
+  <circle cx="1000" cy="195" r="3" fill="#4ade80" opacity="0.5"/>
+  <text x="1015" y="198" fill="#888" font-size="6.5">Rasiai</text>
+  <text x="1015" y="206" fill="#666" font-size="6">Domicėlė b.1912</text>
+
+  <!-- Gelgaudiškis (further away) -->
+  <circle cx="880" cy="55" r="5" fill="none" stroke="#818cf8" stroke-width="1"/>
+  <circle cx="880" cy="55" r="2.5" fill="#818cf8"/>
+  <text x="880" y="48" fill="#818cf8" font-size="7.5" text-anchor="middle">Gelgaudiškis</text>
+  <text x="880" y="68" fill="#666" font-size="6" text-anchor="middle">Orintas since 1780s · ~25 km N</text>
+
+  <!-- Skardupių paliv (Veronika) -->
+  <circle cx="1080" cy="185" r="3" fill="#888" opacity="0.5"/>
+  <text x="1095" y="188" fill="#777" font-size="6.5">Skardupiai</text>
+  <text x="1095" y="196" fill="#666" font-size="6">Veronika b.~1892</text>
+
+  <!-- Border hint: Lithuania/Prussian border was near here -->
+  <text x="1100" y="140" fill="#444" font-size="6" text-anchor="end">← former Russian/Prussian border</text>
+  <line x1="1100" y1="130" x2="1100" y2="200" stroke="#333" stroke-width="0.5" stroke-dasharray="4 4"/>
+
+</svg>
+</div>
+</div>
+
+<!-- ===== STATISTICS ===== -->
+<div class="stats-bar">
+  <div class="stat"><div class="stat-num">~10,500</div><div class="stat-label">km Lithuania → São Paulo</div></div>
+  <div class="stat"><div class="stat-num">3</div><div class="stat-label">Orantas men emigrated to Brazil</div></div>
+  <div class="stat"><div class="stat-num">15</div><div class="stat-label">km radius — all Lithuanian origins</div></div>
+  <div class="stat"><div class="stat-num">5</div><div class="stat-label">São Paulo neighborhoods settled</div></div>
+  <div class="stat"><div class="stat-num">4</div><div class="stat-label">generations in Brazil (1929–present)</div></div>
+</div>
+
+<!-- ===== DETAIL PANELS ===== -->
+<div class="map-container">
+<div class="detail-row">
+
+<!-- LEFT: Lithuanian origins -->
+<div class="detail-panel">
+  <h2><span class="flag">🇱🇹</span> Lithuanian Origins — Suvalkija</h2>
+
+  <div class="info-card">
+    <div class="ic-title"><span class="highlight">Kybartai / Bijotai / Naumiestis cluster</span></div>
+    <div class="ic-detail">
+      All Orantas emigrants to Brazil originate from a <strong>15 km radius</strong> in southwestern Lithuania (Suvalkija region, Vilkaviškio apskritis). Two separate Jonas Orantas families lived in this area:<br><br>
+      <span class="stayed" style="color:#f59e0b">■</span> <strong>Jonas #1</strong> — Kybartai town (d. 1926). Children: Antanas → Brazil, Anelė → stayed.<br>
+      <span class="green">■</span> <strong>Jonas #2</strong> — Bijotai village (alive 1939). Children: Vicente → Brazil, Justinas → stayed, Jonas Jr. → stayed.
+    </div>
+  </div>
+
+  <div class="info-card">
+    <div class="ic-title"><span class="purple">Deep roots: Gelgaudiškis Orintas clan</span></div>
+    <div class="ic-detail">
+      The Orintas surname is recorded in church books since the <strong>1780s</strong> in Gelgaudiškis parish (Šakiai), ~25 km north of Kybartai. Four generations traced: Jonas Orintas (c.1787) → Baltramiejus → Vincas → Jonas (m.1932). The spelling variation <strong>Orintas/Orantas/Orentas</strong> (vowel i/a/e) is confirmed to occur within the same families.
+    </div>
+  </div>
+
+  <div class="info-card">
+    <div class="ic-title">Wives from across Lithuania</div>
+    <div class="ic-detail">
+      <strong>Marijona Murauskaitė</strong> — Kybartai area (wife of Jonas #1)<br>
+      <strong>Marcelė Butkiūtė</strong> — unknown origin (wife of Jonas #2)<br>
+      <strong>Veronika Kilikauskaitė</strong> — Skardupiai (1st wife of Antanas, 1926)<br>
+      <strong>Sofia Paliukaitė</strong> — <span class="blue">Kaišiadorys</span> (central Lithuania! ~200 km NE — different region)<br>
+      <strong>Domicėlė Senutaitė</strong> — Rasiai, Vilkaviškis (same district as groom)<br>
+      <strong>Konstancija Galinskaitė</strong> — married Justinas at Kybartai 1939
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT: Brazilian settlement -->
+<div class="detail-panel">
+  <h2><span class="flag">🇧🇷</span> Brazilian Settlement — São Paulo</h2>
+
+  <div class="info-card">
+    <div class="ic-title"><span class="pink">São Paulo neighborhoods</span></div>
+    <div class="ic-detail">
+      The Orantas family settled across multiple São Paulo districts, following typical Lithuanian immigrant patterns:<br><br>
+      <strong>Bom Retiro</strong> — Traditional Lithuanian immigrant quarter. Estanislau+Domicėlė married here (1935). Infant Pedro died here (1939). Domicėlė died here (~1968).<br>
+      <strong>Mooca</strong> — Vicente+Sofia married here (1934). Industrial area near Fundição Brasil.<br>
+      <strong>Vila Zelina</strong> — Vicente's main residence. Major Lithuanian community hub.<br>
+      <strong>Vila Mariana</strong> — Biruta and João Jr. born here (1937, 1939).<br>
+      <strong>Guaianazes</strong> — Victor's family. Rua Sebastião de Barros 98 (Victor, Marcos, Ona Kizys all lived here).
+    </div>
+  </div>
+
+  <div class="info-card">
+    <div class="ic-title"><span class="green">Lithuanian identity preserved</span></div>
+    <div class="ic-detail">
+      Evidence of maintained Lithuanian cultural identity in Brazil:<br>
+      • Lithuanian-language <strong>obituary</strong> published in São Paulo press (1983)<br>
+      • Daughter named <strong>Birutė</strong> (legendary Lithuanian figure) in 1937<br>
+      • Lithuanian community witnesses at weddings (Vicente Magunavičius)<br>
+      • Lithuanian press as communication medium 50+ years after emigration<br>
+      • Community close enough that registrar confused brothers' wives on death certificate
+    </div>
+  </div>
+
+  <div class="info-card">
+    <div class="ic-title">Cemeteries</div>
+    <div class="ic-detail">
+      <strong>Crematório de São Paulo</strong> — Vicente (1983)<br>
+      <strong>Cemitério Lageado</strong> — Victor (1996), Ona Kizys (2003)<br>
+      <strong>Cemitério Santo Amaro</strong> — João Jr. (1978)
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ===== EMIGRATION TIMELINE ===== -->
+<div class="detail-row">
+<div class="detail-panel" style="max-width:100%">
+  <h2><span class="flag">📅</span> Emigration &amp; Life Events Timeline</h2>
+
+  <div class="timeline">
+    <div class="tl-event"><span class="tl-year">c.1901</span> <span class="tl-text">Antanas born, Bajorų dv., Kybartai (son of Jonas #1 + Marijona)</span></div>
+    <div class="tl-event"><span class="tl-year">1908</span> <span class="tl-text">Vicente born, 17 Jul, Naumiestis (son of Jonas #2 + Marcelė, Bijotai)</span></div>
+    <div class="tl-event"><span class="tl-year">1911</span> <span class="tl-text">Estanislau born, 20 Oct, Kybartai (⚠️ which Jonas?)</span></div>
+    <div class="tl-event marriage"><span class="tl-year">1926</span> <span class="tl-text">Antanas marries Veronika Aidukaitienė, 6 Feb, Kybartai. Jonas #1 dies 20 Mar.</span></div>
+    <div class="tl-event em"><span class="tl-year">~1929</span> <span class="tl-text">🚢 Antanas emigrates to Brazil (date uncertain)</span></div>
+    <div class="tl-event em"><span class="tl-year">1930</span> <span class="tl-text">🚢 Vincas Orintas departs Bremen on SS Sierra Cordoba, 6 Jan → Santos (~93% = Vicente)</span></div>
+    <div class="tl-event marriage"><span class="tl-year">1934</span> <span class="tl-text">Vicente marries Sofia Paliukaitė, 22 Nov, Mooca, São Paulo</span></div>
+    <div class="tl-event marriage"><span class="tl-year">1935</span> <span class="tl-text">Estanislau marries Domicėlė Senutaitė, 27 Apr, Rua da Graça, São Paulo</span></div>
+    <div class="tl-event"><span class="tl-year">1936</span> <span class="tl-text">Estanislau Jr. born, 21 May, São Paulo (son of Vicente+Sofia)</span></div>
+    <div class="tl-event"><span class="tl-year">1937</span> <span class="tl-text">Biruta born, 9 Nov, Vila Mariana (daughter of Estanislau+Domicėlė)</span></div>
+    <div class="tl-event"><span class="tl-year">1938</span> <span class="tl-text">Victor born, 3 May, São Paulo (son of Antanas+Marcelia)</span></div>
+    <div class="tl-event"><span class="tl-year">1939</span> <span class="tl-text">João Jr. born, 3 Sep, Vila Mariana (son of Estanislau+Domicėlė). In Lithuania: Justinas + Jonas Jr. both marry at Kybartų RKB.</span></div>
+    <div class="tl-event death"><span class="tl-year">1939</span> <span class="tl-text">⚰️ Infant Pedro dies, 29 Sep, Bom Retiro</span></div>
+    <div class="tl-event death"><span class="tl-year">1947</span> <span class="tl-text">⚰️ Antanas dies, 29 Jan, São Paulo, age 46</span></div>
+    <div class="tl-event"><span class="tl-year">1964</span> <span class="tl-text">Marcos born, 8 Jun (son of Victor+Maria Nunes) — 3rd generation</span></div>
+    <div class="tl-event death"><span class="tl-year">~1968</span> <span class="tl-text">⚰️ Domicėlė dies, Bom Retiro, age ~56</span></div>
+    <div class="tl-event death"><span class="tl-year">1970</span> <span class="tl-text">⚰️ Justinas dies, 14 Feb, Virbalis, Lithuania (stayed)</span></div>
+    <div class="tl-event death"><span class="tl-year">1974</span> <span class="tl-text">⚰️ Ismália (wife of João Jr.) dies, 24 May, age 28</span></div>
+    <div class="tl-event death"><span class="tl-year">1978</span> <span class="tl-text">⚰️ João Jr. dies, 11 Sep, Hospital Santa Cruz, age 39</span></div>
+    <div class="tl-event death"><span class="tl-year">1983</span> <span class="tl-text">⚰️ Vicente dies, 25 Aug, São Paulo. Lithuanian-language obituary published.</span></div>
+    <div class="tl-event"><span class="tl-year">1993</span> <span class="tl-text">Gabriella born, 1 Nov (daughter of Marcos+Solange) — 4th generation</span></div>
+    <div class="tl-event death"><span class="tl-year">1996</span> <span class="tl-text">⚰️ Victor dies, 13 Sep, Guaianazes, age 58</span></div>
+    <div class="tl-event"><span class="tl-year">2001</span> <span class="tl-text">Maira born, 18 Feb (daughter of Marcos+Solange)</span></div>
+    <div class="tl-event death"><span class="tl-year">2003</span> <span class="tl-text">⚰️ Ona Kizys dies, 16 Sep, São Paulo, age 76. Last Lithuanian-born in the family.</span></div>
+    <div class="tl-event death"><span class="tl-year">2022</span> <span class="tl-text">⚰️ Estanislau Jr. dies, 27 Apr, Vargem Grande Paulista, age 85. Last child of an emigrant.</span></div>
+  </div>
+</div>
+</div>
+
+<!-- ===== EMIGRATION CONTEXT ===== -->
+<div class="detail-row">
+<div class="detail-panel" style="max-width:100%">
+  <h2><span class="flag">🌊</span> Emigration Context — Why Brazil?</h2>
+
+  <div style="display:flex;gap:16px;flex-wrap:wrap">
+    <div class="info-card" style="flex:1;min-width:280px">
+      <div class="ic-title"><span class="highlight">Pre-war economic emigration (1929–1930)</span></div>
+      <div class="ic-detail">
+        The Orantas emigration to Brazil was part of a <strong>pre-war economic wave</strong>, distinct from the later WWII/DP camp refugees. The Bremen passenger list shows ~18 Lithuanian emigrants on the same ship (SS Sierra Cordoba, Jan 1930), all listed as agricultural laborers heading to Santos — an <strong>organized group emigration</strong>.<br><br>
+        Lithuania in the late 1920s was a poor agricultural country. Suvalkija (southwestern Lithuania) had particularly small landholdings. Brazil was actively recruiting European agricultural workers. Lithuanian communities already existed in São Paulo (Bom Retiro, Vila Zelina).
+      </div>
+    </div>
+
+    <div class="info-card" style="flex:1;min-width:280px">
+      <div class="ic-title"><span class="highlight">Three fates from Kybartai</span></div>
+      <div class="ic-detail">
+        Three Orantas men from the same ~15 km area, three very different fates:<br><br>
+        <span class="green">●</span> <strong>Vincas</strong> (b.1908) — emigrated 1929/30 as pre-war economic emigrant directly to São Paulo. Became foundry worker. Died 1983.<br><br>
+        <span class="green">●</span> <strong>Antanas</strong> (b.1901) — emigrated ~1929 (date uncertain). Insurance agent → laborer. Died 1947 age 46.<br><br>
+        <span class="green">●</span> <strong>Estanislau</strong> (b.1911) — emigrated before 1935. Cook. Parentage uncertain (which Jonas?).<br><br>
+        Meanwhile, their siblings who stayed — Justinas, Jonas Jr., Anelė — lived through Soviet occupation, WWII, and the re-occupation of Lithuania. Justinas died in 1970 Virbalis; Jonas Jr. in 1986 Kybartai.
+      </div>
+    </div>
+
+    <div class="info-card" style="flex:1;min-width:280px">
+      <div class="ic-title"><span class="highlight">The São Paulo Lithuanian colony</span></div>
+      <div class="ic-detail">
+        São Paulo had one of the largest Lithuanian communities in South America. Key areas:<br><br>
+        <strong>Vila Zelina</strong> — the heart of the Lithuanian community, sometimes called "Little Lithuania." Vicente lived here.<br>
+        <strong>Bom Retiro</strong> — immigrant receiving neighborhood. First address for many arrivals.<br><br>
+        The community was tight-knit enough that:<br>
+        • Registrars confused one family's wife with another's<br>
+        • Lithuanian-language obituaries were still published in the 1980s<br>
+        • Children born in Brazil received Lithuanian names (Birutė)<br>
+        • Wedding witnesses were fellow Lithuanians (Magunavičius)
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="footer">
+  Heritage Database: 997 entries · Checksum: c2fd9da4 · Sources: FamilySearch, metrikai.lt, Staatsarchiv Bremen, EAIS, Geni, São Paulo civil records, LVIA<br>
+  Generated 12 April 2026 · Orantas/Orintas/Orentas Family Research
+</div>
+
 </body>
-#</html>
+</html>
